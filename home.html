@@ -1,0 +1,908 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NextGen Free Stuff Store - Bitcoin</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+            color: #333;
+        }
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            background: #fff;
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .product-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 25px;
+            margin: 20px 0;
+        }
+        .product {
+            border: 1px solid #e0e0e0;
+            padding: 15px;
+            text-align: center;
+            border-radius: 5px;
+            transition: transform 0.2s;
+        }
+        .product:hover {
+            transform: scale(1.03);
+        }
+        .hidden {
+            display: none;
+        }
+        button {
+            padding: 10px 20px;
+            background: #1e90ff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+            transition: background 0.2s;
+        }
+        button:hover {
+            background: #4169e1;
+        }
+        .chatbot, .debug-panel, .notifications-panel {
+            position: fixed;
+            width: 350px;
+            background: #fff;
+            border: 1px solid #ddd;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .chatbot {
+            bottom: 20px;
+            right: 20px;
+        }
+        .debug-panel {
+            top: 20px;
+            right: 20px;
+        }
+        .notifications-panel {
+            bottom: 20px;
+            left: 20px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .chat-messages, .debug-output, .notifications-list {
+            height: 250px;
+            overflow-y: auto;
+            margin-bottom: 15px;
+            background: #f9f9f9;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .section {
+            background: #f8f9fa;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 5px;
+        }
+        .settings-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+        }
+        .input-group {
+            margin: 10px 0;
+        }
+        .input-group label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        input, select {
+            padding: 8px;
+            width: 100%;
+            max-width: 300px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .stats-bar {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px;
+            background: #e9ecef;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Login Screen -->
+    <div id="loginContainer" class="container">
+        <h2>Login</h2>
+        <form id="loginForm">
+            <div class="input-group">
+                <label>Email:</label>
+                <input type="email" id="email" required>
+            </div>
+            <div class="input-group">
+                <label>Password:</label>
+                <input type="password" id="password" required>
+            </div>
+            <button type="submit">Login</button>
+            <button type="button" onclick="showRegister()">Register</button>
+        </form>
+    </div>
+
+    <!-- Register Screen -->
+    <div id="registerContainer" class="container hidden">
+        <h2>Register</h2>
+        <form id="registerForm">
+            <div class="input-group">
+                <label>Email:</label>
+                <input type="email" id="regEmail" required>
+            </div>
+            <div class="input-group">
+                <label>Password:</label>
+                <input type="password" id="regPassword" required>
+            </div>
+            <div class="input-group">
+                <label>Username:</label>
+                <input type="text" id="regUsername" required>
+            </div>
+            <button type="submit">Register</button>
+            <button type="button" onclick="showLogin()">Back to Login</button>
+        </form>
+    </div>
+
+    <!-- Main Store -->
+    <div id="storeContainer" class="container hidden">
+        <div class="stats-bar">
+            <span>Welcome, <span id="userEmail"></span></span>
+            <span>Balance: <span id="bitcoinBalance">1000</span> BTC</span>
+            <span>Cart: <span id="cartCount">0</span> items</span>
+        </div>
+        
+        <div class="section">
+            <h3>Currency Converter</h3>
+            <select id="currencySelect">
+                <option value="USD">USD</option>
+                <option value="EUR">EUR</option>
+                <option value="ETH">ETH</option>
+                <option value="BNB">BNB</option>
+            </select>
+            <span id="convertedValue">0</span>
+        </div>
+
+        <div class="section">
+            <h3>Controls</h3>
+            <button onclick="showAccount()">Account</button>
+            <button onclick="showSettings()">Settings</button>
+            <button onclick="showWishlist()">Wishlist</button>
+            <button onclick="showHistory()">Purchase History</button>
+            <button onclick="logout()">Logout</button>
+        </div>
+
+        <div class="section">
+            <h3>AI Assistant Features</h3>
+            <button onclick="findBestDeals()">Find Best Deals</button>
+            <button onclick="suggestBundle()">Suggest Bundle</button>
+            <button onclick="analyzeCart()">Analyze Cart</button>
+            <p id="aiOutput"></p>
+        </div>
+
+        <div class="section">
+            <h3>Search & Filter</h3>
+            <input type="text" id="searchInput" placeholder="Search products..." onkeyup="filterProducts()">
+            <select id="categoryFilter" onchange="filterProducts()">
+                <option value="all">All Categories</option>
+                <option value="electronics">Electronics</option>
+                <option value="fashion">Fashion</option>
+                <option value="home">Home</option>
+                <option value="sports">Sports</option>
+                <option value="food">Food</option>
+                <option value="vehicles">Vehicles</option>
+            </select>
+        </div>
+
+        <div id="productGrid" class="product-grid"></div>
+        <button onclick="showCheckout()">Checkout (<span id="cartCountBottom">0</span>)</button>
+    </div>
+
+    <!-- Account Management -->
+    <div id="accountContainer" class="container hidden">
+        <h2>Account Management</h2>
+        <div class="section">
+            <p>Username: <span id="accountUsername"></span></p>
+            <p>Email: <span id="accountEmail"></span></p>
+            <p>Balance: <span id="accountBalance">1000</span> BTC</p>
+            <p>Total Spent: <span id="totalSpent">0</span> BTC</p>
+            <p>Orders: <span id="orderCount">0</span></p>
+        </div>
+        <div class="section">
+            <h3>Actions</h3>
+            <button onclick="addFunds()">Add Funds (100 BTC)</button>
+            <button onclick="withdrawFunds()">Withdraw Funds</button>
+            <button onclick="changePassword()">Change Password</button>
+            <button onclick="exportData()">Export Account Data</button>
+        </div>
+        <button onclick="showStore()">Back to Store</button>
+    </div>
+
+    <!-- Checkout -->
+    <div id="checkoutContainer" class="container hidden">
+        <h2>Checkout</h2>
+        <div class="section">
+            <p>Total: <span id="totalAmount">0</span> BTC</p>
+            <div id="cartItems"></div>
+            <button onclick="processPayment()">Pay with Bitcoin</button>
+            <button onclick="applyPromo()">Apply Promo Code</button>
+            <input type="text" id="promoCode" placeholder="Enter promo code">
+        </div>
+        <div id="blockchainConsole" class="section hidden">
+            <p>Blockchain Transaction Processing...</p>
+            <p>Verifying: <span id="transactionHash"></span></p>
+            <p>Status: <span id="transactionStatus">Pending</span></p>
+        </div>
+        <button onclick="showStore()">Back to Store</button>
+    </div>
+
+    <!-- Wishlist -->
+    <div id="wishlistContainer" class="container hidden">
+        <h2>Wishlist</h2>
+        <div id="wishlistItems" class="product-grid"></div>
+        <button onclick="showStore()">Back to Store</button>
+    </div>
+
+    <!-- Purchase History -->
+    <div id="historyContainer" class="container hidden">
+        <h2>Purchase History</h2>
+        <div id="historyItems"></div>
+        <button onclick="showStore()">Back to Store</button>
+    </div>
+
+    <!-- Settings -->
+    <div id="settingsContainer" class="container hidden">
+        <h2>Settings</h2>
+        <div class="settings-grid">
+            <div>
+                <h3>General</h3>
+                <label><input type="checkbox" id="darkMode"> Dark Mode</label><br>
+                <label><input type="checkbox" id="notifications"> Notifications</label><br>
+                <label><input type="checkbox" id="autoSave"> Auto-Save Cart</label><br>
+                <label>Theme:
+                    <select id="themeSelect">
+                        <option value="light">Light</option>
+                        <option value="dark">Dark</option>
+                        <option value="blue">Blue</option>
+                    </select>
+                </label>
+            </div>
+            <div>
+                <h3>Store Preferences</h3>
+                <label><input type="checkbox" id="showStock"> Show Stock Levels</label><br>
+                <label><input type="checkbox" id="priceAlerts"> Price Drop Alerts</label><br>
+                <label><input type="checkbox" id="fastCheckout"> Fast Checkout</label><br>
+                <label>Default Currency:
+                    <select id="defaultCurrency">
+                        <option value="BTC">BTC</option>
+                        <option value="USD">USD</option>
+                        <option value="EUR">EUR</option>
+                    </select>
+                </label>
+            </div>
+            <div>
+                <h3>Debug & Tools</h3>
+                <label><input type="checkbox" id="debugMode" onchange="toggleDebugMode()"> Debug Mode</label><br>
+                <label><input type="checkbox" id="performanceMonitor" onchange="togglePerformance()"> Performance Monitor</label><br>
+                <label><input type="checkbox" id="logNetwork" onchange="toggleNetworkLog()"> Network Log</label><br>
+                <button onclick="clearLogs()">Clear Debug Logs</button>
+            </div>
+        </div>
+        <button onclick="showStore()">Back to Store</button>
+    </div>
+
+    <!-- AI Chatbot -->
+    <div id="chatbot" class="chatbot">
+        <h3>AI Assistant <button onclick="toggleChatbot()" style="float:right;padding:5px;">X</button></h3>
+        <div id="chatMessages" class="chat-messages"></div>
+        <input type="text" id="chatInput" placeholder="Ask me anything...">
+        <button onclick="sendChat()">Send</button>
+    </div>
+
+    <!-- Debug Panel -->
+    <div id="debugPanel" class="debug-panel hidden">
+        <h3>Debug Tools</h3>
+        <div id="debugOutput" class="debug-output"></div>
+        <p>RAM Used: <span id="ramUsed">0</span> MB</p>
+        <p>Bytes Written: <span id="bytesWritten">0</span></p>
+        <p>CPU Load: <span id="cpuLoad">0</span>%</p>
+        <p>Network Requests: <span id="networkRequests">0</span></p>
+        <button onclick="dumpMemory()">Dump Memory</button>
+        <button onclick="simulateCrash()">Simulate Crash</button>
+    </div>
+
+    <!-- Notifications Panel -->
+    <div id="notificationsPanel" class="notifications-panel">
+        <h3>Notifications <button onclick="toggleNotifications()" style="float:right;padding:5px;">X</button></h3>
+        <div id="notificationsList" class="notifications-list"></div>
+    </div>
+
+    <script>
+        // Core Variables
+        let balance = 1000;
+        let cart = [];
+        let wishlist = [];
+        let purchaseHistory = [];
+        let user = { email: '', username: '', totalSpent: 0, orders: 0 };
+        let ramUsed = 0;
+        let bytesWritten = 0;
+        let cpuLoad = 0;
+        let networkRequests = 0;
+        let debugEnabled = false;
+        let performanceEnabled = false;
+        let networkLogEnabled = false;
+
+        // Products (200+ items)
+        const products = [
+            { name: "Smartphone X", price: 0.015, category: "electronics", stock: 50 },
+            { name: "4K TV", price: 0.05, category: "electronics", stock: 20 },
+            { name: "Gaming Laptop", price: 0.08, category: "electronics", stock: 15 },
+            { name: "Wireless Earbuds", price: 0.003, category: "electronics", stock: 100 },
+            { name: "Designer Jacket", price: 0.01, category: "fashion", stock: 30 },
+            { name: "Leather Shoes", price: 0.008, category: "fashion", stock: 40 },
+            { name: "Luxury Watch", price: 0.02, category: "fashion", stock: 10 },
+            { name: "Sofa Set", price: 0.03, category: "home", stock: 25 },
+            { name: "Smart Fridge", price: 0.06, category: "home", stock: 15 },
+            { name: "Robot Vacuum", price: 0.01, category: "home", stock: 35 },
+            { name: "Mountain Bike", price: 0.02, category: "sports", stock: 20 },
+            { name: "Tennis Racket", price: 0.005, category: "sports", stock: 50 },
+            { name: "Protein Powder", price: 0.002, category: "food", stock: 80 },
+            { name: "Gourmet Coffee", price: 0.003, category: "food", stock: 60 },
+            { name: "Electric Car", price: 1.5, category: "vehicles", stock: 5 },
+            { name: "Motorcycle", price: 0.3, category: "vehicles", stock: 10 },
+            { name: "Drone", price: 0.02, category: "electronics", stock: 25 },
+            { name: "VR Headset", price: 0.01, category: "electronics", stock: 30 },
+            { name: "Smart Thermostat", price: 0.004, category: "home", stock: 45 },
+            { name: "Camping Tent", price: 0.007, category: "sports", stock: 40 },
+            // Add 180+ more items
+            ...Array(185).fill().map((_, i) => {
+                const categories = ["electronics", "fashion", "home", "sports", "food", "vehicles"];
+                const cat = categories[Math.floor(Math.random() * categories.length)];
+                return {
+                    name: `${cat.charAt(0).toUpperCase() + cat.slice(1)} Item ${i + 1}`,
+                    price: (Math.random() * (cat === "vehicles" ? 2 : 0.1) + 0.001).toFixed(3),
+                    category: cat,
+                    stock: Math.floor(Math.random() * 50) + 10
+                };
+            })
+        ];
+
+        const exchangeRates = { USD: 60000, EUR: 55000, ETH: 15, BNB: 100 }; // Fake rates
+
+        // Screen Navigation
+        function showLogin() { toggleContainers('loginContainer'); }
+        function showRegister() { toggleContainers('registerContainer'); }
+        function showStore() { toggleContainers('storeContainer'); loadRecommendations(); updateCurrency(); }
+        function showAccount() { toggleContainers('accountContainer'); updateAccountInfo(); }
+        function showCheckout() { 
+            if (cart.length === 0) { notify('Cart is empty!'); return; }
+            toggleContainers('checkoutContainer'); 
+            updateCheckout();
+        }
+        function showWishlist() { toggleContainers('wishlistContainer'); loadWishlist(); }
+        function showHistory() { toggleContainers('historyContainer'); loadHistory(); }
+        function showSettings() { toggleContainers('settingsContainer'); }
+        function toggleContainers(showId) {
+            document.querySelectorAll('.container').forEach(c => c.classList.add('hidden'));
+            document.getElementById(showId).classList.remove('hidden');
+            logDebug(`Navigated to ${showId}`);
+            simulateResources();
+        }
+
+        // Login/Register
+        document.getElementById('loginForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            user.email = document.getElementById('email').value;
+            user.username = 'User' + Math.floor(Math.random() * 1000); // Simulated
+            showStore();
+            document.getElementById('userEmail').textContent = user.email;
+            loadProducts();
+            notify('Logged in successfully!');
+        });
+
+        document.getElementById('registerForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            user.email = document.getElementById('regEmail').value;
+            user.username = document.getElementById('regUsername').value;
+            showStore();
+            document.getElementById('userEmail').textContent = user.email;
+            loadProducts();
+            notify('Registered successfully!');
+        });
+
+        function logout() {
+            if (document.getElementById('autoSave')?.checked) localStorage.setItem('cart', JSON.stringify(cart));
+            user = { email: '', username: '', totalSpent: 0, orders: 0 };
+            cart = [];
+            wishlist = [];
+            purchaseHistory = [];
+            showLogin();
+            notify('Logged out!');
+            logDebug('User logged out');
+        }
+
+        // Load Products
+        function loadProducts() {
+            const grid = document.getElementById('productGrid');
+            grid.innerHTML = '';
+            products.forEach(product => {
+                const stockText = document.getElementById('showStock')?.checked ? `<p>Stock: ${product.stock}</p>` : '';
+                const div = document.createElement('div');
+                div.className = 'product';
+                div.innerHTML = `
+                    <h3>${product.name}</h3>
+                    <p>${product.price} BTC</p>
+                    ${stockText}
+                    <button onclick="addToCart('${product.name}', ${product.price}, '${product.category}')">Add to Cart</button>
+                    <button onclick="addToWishlist('${product.name}', ${product.price}, '${product.category}')">Wishlist</button>
+                    <button onclick="notifyPriceDrop('${product.name}', ${product.price})">Alert Price Drop</button>
+                `;
+                grid.appendChild(div);
+            });
+            logDebug('Products loaded');
+            filterProducts(); // Apply initial filter
+        }
+
+        // Cart Management
+        function addToCart(name, price, category) {
+            if (products.find(p => p.name === name).stock <= 0) {
+                notify(`${name} is out of stock!`);
+                return;
+            }
+            cart.push({ name, price, category });
+            updateCartCount();
+            notify(`${name} added to cart!`);
+            logDebug(`Added ${name} to cart`);
+            simulateResources();
+            products.find(p => p.name === name).stock--;
+            loadRecommendations();
+            updateCurrency();
+        }
+
+        function updateCartCount() {
+            document.getElementById('cartCount').textContent = cart.length;
+            document.getElementById('cartCountBottom').textContent = cart.length;
+        }
+
+        // Wishlist
+        function addToWishlist(name, price, category) {
+            if (wishlist.some(w => w.name === name)) {
+                notify(`${name} is already in your wishlist!`);
+                return;
+            }
+            wishlist.push({ name, price, category });
+            notify(`${name} added to wishlist!`);
+            logDebug(`Added ${name} to wishlist`);
+        }
+
+        function loadWishlist() {
+            const grid = document.getElementById('wishlistItems');
+            grid.innerHTML = '';
+            wishlist.forEach(item => {
+                const div = document.createElement('div');
+                div.className = 'product';
+                div.innerHTML = `
+                    <h3>${item.name}</h3>
+                    <p>${item.price} BTC</p>
+                    <button onclick="addToCart('${item.name}', ${item.price}, '${item.category}')">Add to Cart</button>
+                    <button onclick="removeFromWishlist('${item.name}')">Remove</button>
+                `;
+                grid.appendChild(div);
+            });
+        }
+
+        function removeFromWishlist(name) {
+            wishlist = wishlist.filter(w => w.name !== name);
+            loadWishlist();
+            notify(`${name} removed from wishlist!`);
+        }
+
+        // Purchase History
+        function loadHistory() {
+            const container = document.getElementById('historyItems');
+            container.innerHTML = purchaseHistory.map(order => `
+                <div class="section">
+                    <p>Order #${order.id} - ${order.date}</p>
+                    <p>Total: ${order.total} BTC</p>
+                    <p>Items: ${order.items.map(i => i.name).join(', ')}</p>
+                </div>
+            `).join('');
+        }
+
+        // AI Features
+        function findBestDeals() {
+            const deals = products
+                .filter(p => p.stock > 0 && p.price < 0.01)
+                .sort((a, b) => a.price - b.price)
+                .slice(0, 5);
+            document.getElementById('aiOutput').innerHTML = deals.length ?
+                `Best Deals:<br>${deals.map(d => `${d.name} - ${d.price} BTC`).join('<br>')}` :
+                'No deals under 0.01 BTC found!';
+            logDebug('Best deals calculated');
+        }
+
+        function suggestBundle() {
+            const cartCategories = [...new Set(cart.map(i => i.category))];
+            const bundle = products
+                .filter(p => !cart.some(c => c.name === p.name) && cartCategories.includes(p.category))
+                .slice(0, 3);
+            const total = bundle.reduce((sum, p) => sum + parseFloat(p.price), 0) * 0.9; // 10% discount
+            document.getElementById('aiOutput').innerHTML = bundle.length ?
+                `Suggested Bundle (10% off):<br>${bundle.map(p => `${p.name} - ${p.price} BTC`).join('<br>')}<br>Total: ${total.toFixed(3)} BTC` :
+                'Add items to cart for bundle suggestions!';
+            logDebug('Bundle suggested');
+        }
+
+        function analyzeCart() {
+            const total = cart.reduce((sum, i) => sum + parseFloat(i.price), 0);
+            const avgPrice = cart.length ? (total / cart.length).toFixed(3) : 0;
+            const topCategory = Object.entries(cart.reduce((acc, i) => {
+                acc[i.category] = (acc[i.category] || 0) + 1;
+                return acc;
+            }, {})).sort((a, b) => b[1] - a[1])[0];
+            document.getElementById('aiOutput').innerHTML = `
+                Cart Analysis:<br>
+                Total: ${total.toFixed(3)} BTC<br>
+                Average Price: ${avgPrice} BTC<br>
+                Top Category: ${topCategory ? topCategory[0] : 'None'} (${topCategory ? topCategory[1] : 0} items)
+            `;
+            logDebug('Cart analyzed');
+        }
+
+        // AI Recommendations
+        function loadRecommendations() {
+            const topCategory = Object.entries(purchaseHistory.reduce((acc, order) => {
+                order.items.forEach(i => acc[i.category] = (acc[i.category] || 0) + 1);
+                return acc;
+            }, {})).sort((a, b) => b[1] - a[1])[0]?.[0];
+            const recs = products
+                .filter(p => p.category === topCategory && !cart.some(c => c.name === p.name) && p.stock > 0)
+                .slice(0, 5);
+            document.getElementById('recommendations').innerHTML = recs.length ?
+                recs.map(p => `<p>${p.name} - ${p.price} BTC <button onclick="addToCart('${p.name}', ${p.price}, '${p.category}')">Add</button></p>`).join('') :
+                '<p>No recommendations yet!</p>';
+        }
+
+        // Account Management
+        function updateAccountInfo() {
+            document.getElementById('accountUsername').textContent = user.username;
+            document.getElementById('accountEmail').textContent = user.email;
+            document.getElementById('accountBalance').textContent = balance.toFixed(3);
+            document.getElementById('totalSpent').textContent = user.totalSpent.toFixed(3);
+            document.getElementById('orderCount').textContent = user.orders;
+        }
+
+        function addFunds() {
+            balance += 100;
+            updateAccountInfo();
+            document.getElementById('bitcoinBalance').textContent = balance.toFixed(3);
+            notify('100 BTC added to your account!');
+            logDebug('Funds added: 100 BTC');
+            updateCurrency();
+        }
+
+        function withdrawFunds() {
+            const amount = prompt('Enter amount to withdraw (BTC):');
+            if (amount && parseFloat(amount) <= balance) {
+                balance -= parseFloat(amount);
+                updateAccountInfo();
+                document.getElementById('bitcoinBalance').textContent = balance.toFixed(3);
+                notify(`${amount} BTC withdrawn!`);
+                logDebug(`Funds withdrawn: ${amount} BTC`);
+                updateCurrency();
+            } else {
+                notify('Invalid amount or insufficient funds!');
+            }
+        }
+
+        function changePassword() {
+            const newPass = prompt('Enter new password:');
+            if (newPass) {
+                notify('Password changed successfully!');
+                logDebug('Password changed');
+            }
+        }
+
+        function exportData() {
+            const data = { user, cart, wishlist, purchaseHistory };
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'account_data.json';
+            a.click();
+            URL.revokeObjectURL(url);
+            notify('Account data exported!');
+            logDebug('Data exported');
+        }
+
+        // Checkout
+        function updateCheckout() {
+            const total = cart.reduce((sum, item) => sum + parseFloat(item.price), 0);
+            document.getElementById('totalAmount').textContent = total.toFixed(3);
+            document.getElementById('cartItems').innerHTML = cart.map(item => `
+                <p>${item.name}: ${item.price} BTC <button onclick="removeFromCart('${item.name}')">Remove</button></p>
+            `).join('');
+        }
+
+        function removeFromCart(name) {
+            cart = cart.filter(item => item.name !== name);
+            updateCartCount();
+            updateCheckout();
+            products.find(p => p.name === name).stock++;
+            notify(`${name} removed from cart!`);
+        }
+
+        function applyPromo() {
+            const code = document.getElementById('promoCode').value.trim();
+            if (code === 'SAVE10') {
+                const total = parseFloat(document.getElementById('totalAmount').textContent) * 0.9;
+                document.getElementById('totalAmount').textContent = total.toFixed(3);
+                notify('Promo code SAVE10 applied! 10% off');
+            } else {
+                notify('Invalid promo code!');
+            }
+        }
+
+        function processPayment() {
+            const total = parseFloat(document.getElementById('totalAmount').textContent);
+            if (total > balance) { notify('Insufficient funds!'); return; }
+            
+            document.getElementById('blockchainConsole').classList.remove('hidden');
+            const hash = '0x' + Math.random().toString(16).slice(2);
+            document.getElementById('transactionHash').textContent = hash;
+
+            setTimeout(() => {
+                document.getElementById('transactionStatus').textContent = 'Confirmed';
+                balance -= total;
+                user.totalSpent += total;
+                user.orders++;
+                purchaseHistory.push({
+                    id: user.orders,
+                    date: new Date().toLocaleString(),
+                    items: [...cart],
+                    total
+                });
+                document.getElementById('bitcoinBalance').textContent = balance.toFixed(3);
+                updateAccountInfo();
+                notify('Payment successful!');
+                logDebug(`Payment processed: ${total} BTC`);
+                updateCurrency();
+                resetStore();
+            }, document.getElementById('fastCheckout')?.checked ? 500 : 2000);
+            logNetwork('Blockchain request sent');
+        }
+
+        function resetStore() {
+            cart = [];
+            updateCartCount();
+            showStore();
+            document.getElementById('blockchainConsole').classList.add('hidden');
+        }
+
+        // Search & Filter
+        function filterProducts() {
+            const search = document.getElementById('searchInput').value.toLowerCase();
+            const category = document.getElementById('categoryFilter').value;
+            const grid = document.getElementById('productGrid');
+            grid.innerHTML = '';
+            products.filter(p => 
+                (category === 'all' || p.category === category) &&
+                p.name.toLowerCase().includes(search)
+            ).forEach(product => {
+                const stockText = document.getElementById('showStock')?.checked ? `<p>Stock: ${product.stock}</p>` : '';
+                const div = document.createElement('div');
+                div.className = 'product';
+                div.innerHTML = `
+                    <h3>${product.name}</h3>
+                    <p>${product.price} BTC</p>
+                    ${stockText}
+                    <button onclick="addToCart('${product.name}', ${product.price}, '${product.category}')">Add to Cart</button>
+                    <button onclick="addToWishlist('${product.name}', ${product.price}, '${product.category}')">Wishlist</button>
+                    <button onclick="notifyPriceDrop('${product.name}', ${product.price})">Alert Price Drop</button>
+                `;
+                grid.appendChild(div);
+            });
+            logDebug('Products filtered');
+        }
+
+        // AI Chatbot
+        function toggleChatbot() {
+            document.getElementById('chatbot').classList.toggle('hidden');
+            logDebug('Chatbot toggled');
+        }
+
+        function sendChat() {
+            const input = document.getElementById('chatInput');
+            const msg = input.value.trim();
+            if (!msg) return;
+            
+            const chat = document.getElementById('chatMessages');
+            chat.innerHTML += `<p><b>You:</b> ${msg}</p>`;
+            
+            let response = '';
+            const lowMsg = msg.toLowerCase();
+            if (lowMsg.includes('help')) response = 'How can I assist you? Try asking about products, balance, or cart!';
+            else if (lowMsg.includes('balance')) response = `Your balance is ${balance.toFixed(3)} BTC.`;
+            else if (lowMsg.includes('cart')) response = cart.length ? 
+                `You have ${cart.length} items in your cart: ${cart.map(i => i.name).join(', ')}` : 
+                'Your cart is empty!';
+            else if (lowMsg.includes('recommend')) {
+                const rec = products[Math.floor(Math.random() * products.length)];
+                response = `I recommend ${rec.name} for ${rec.price} BTC!`;
+            } else if (lowMsg.includes('deal')) findBestDeals();
+            else if (lowMsg.includes('stock') && lowMsg.split(' ').length > 1) {
+                const itemName = lowMsg.split(' ').slice(1).join(' ');
+                const item = products.find(p => p.name.toLowerCase().includes(itemName));
+                response = item ? `${item.name} has ${item.stock} in stock.` : 'Item not found!';
+            } else {
+                response = `I understood "${msg}". How about checking out some deals or asking for a recommendation?`;
+            }
+            
+            setTimeout(() => {
+                chat.innerHTML += `<p><b>AI:</b> ${response}</p>`;
+                chat.scrollTop = chat.scrollHeight;
+                notify('AI responded to your query!');
+            }, 500);
+            
+            input.value = '';
+            logDebug(`Chat sent: ${msg}`);
+            simulateResources();
+        }
+
+        document.getElementById('chatInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') sendChat();
+        });
+
+        // Currency Conversion
+        function updateCurrency() {
+            const currency = document.getElementById('currencySelect').value;
+            const converted = (balance * exchangeRates[currency]).toFixed(2);
+            document.getElementById('convertedValue').textContent = `${converted} ${currency}`;
+            logDebug(`Currency updated: ${converted} ${currency}`);
+        }
+
+        document.getElementById('currencySelect').addEventListener('change', updateCurrency);
+
+        // Notifications
+        function toggleNotifications() {
+            document.getElementById('notificationsPanel').classList.toggle('hidden');
+            logDebug('Notifications panel toggled');
+        }
+
+        function notify(message) {
+            if (!document.getElementById('notifications')?.checked) return;
+            const list = document.getElementById('notificationsList');
+            list.innerHTML += `<p>${new Date().toLocaleTimeString()} - ${message}</p>`;
+            list.scrollTop = list.scrollHeight;
+            logDebug(`Notification: ${message}`);
+            document.getElementById('notificationsPanel').classList.remove('hidden');
+        }
+
+        function notifyPriceDrop(name, price) {
+            setTimeout(() => {
+                if (Math.random() > 0.7) {
+                    const newPrice = (price * 0.8).toFixed(3);
+                    products.find(p => p.name === name).price = newPrice;
+                    notify(`Price drop alert! ${name} now ${newPrice} BTC`);
+                    loadProducts();
+                }
+            }, Math.random() * 10000);
+            notify(`Price drop alert set for ${name}!`);
+        }
+
+        // Settings
+        document.getElementById('darkMode').addEventListener('change', (e) => {
+            document.body.style.backgroundColor = e.target.checked ? '#222' : '#f5f5f5';
+            document.querySelectorAll('.container').forEach(c => c.style.background = e.target.checked ? '#333' : '#fff');
+            logDebug(`Dark mode: ${e.target.checked}`);
+        });
+
+        document.getElementById('themeSelect').addEventListener('change', (e) => {
+            const theme = e.target.value;
+            document.body.style.backgroundColor = theme === 'dark' ? '#222' : theme === 'blue' ? '#e6f0ff' : '#f5f5f5';
+            document.querySelectorAll('button').forEach(b => b.style.background = theme === 'blue' ? '#4682b4' : '#1e90ff');
+            logDebug(`Theme changed to ${theme}`);
+        });
+
+        function toggleDebugMode() {
+            debugEnabled = document.getElementById('debugMode').checked;
+            document.getElementById('debugPanel').classList.toggle('hidden', !debugEnabled);
+            logDebug(`Debug mode: ${debugEnabled}`);
+        }
+
+        function togglePerformance() {
+            performanceEnabled = document.getElementById('performanceMonitor').checked;
+            if (performanceEnabled) setInterval(updatePerformance, 1000);
+            logDebug(`Performance monitor: ${performanceEnabled}`);
+        }
+
+        function toggleNetworkLog() {
+            networkLogEnabled = document.getElementById('logNetwork').checked;
+            logDebug(`Network log: ${networkLogEnabled}`);
+        }
+
+        function clearLogs() {
+            document.getElementById('debugOutput').innerHTML = '';
+            bytesWritten = 0;
+            document.getElementById('bytesWritten').textContent = bytesWritten;
+            logDebug('Logs cleared');
+        }
+
+        // Debug Tools
+        function logDebug(message) {
+            if (!debugEnabled) return;
+            const output = document.getElementById('debugOutput');
+            output.innerHTML += `<p>${new Date().toLocaleTimeString()} - ${message}</p>`;
+            output.scrollTop = output.scrollHeight;
+            bytesWritten += message.length;
+            document.getElementById('bytesWritten').textContent = bytesWritten;
+        }
+
+        function logNetwork(message) {
+            if (!networkLogEnabled) return;
+            logDebug(`[Network] ${message}`);
+            networkRequests++;
+            document.getElementById('networkRequests').textContent = networkRequests;
+        }
+
+        function simulateResources() {
+            ramUsed += Math.random() * 0.3;
+            cpuLoad = Math.min(100, cpuLoad + Math.random() * 5);
+            document.getElementById('ramUsed').textContent = ramUsed.toFixed(2);
+            if (performanceEnabled) document.getElementById('cpuLoad').textContent = cpuLoad.toFixed(1);
+            bytesWritten += Math.floor(Math.random() * 50);
+            document.getElementById('bytesWritten').textContent = bytesWritten;
+        }
+
+        function updatePerformance() {
+            if (!performanceEnabled) return;
+            cpuLoad = Math.max(0, cpuLoad - Math.random() * 2);
+            document.getElementById('cpuLoad').textContent = cpuLoad.toFixed(1);
+        }
+
+        function dumpMemory() {
+            const dump = {
+                user,
+                cart: cart.length,
+                wishlist: wishlist.length,
+                purchaseHistory: purchaseHistory.length,
+                system: { ramUsed, bytesWritten, cpuLoad, networkRequests }
+            };
+            logDebug(`Memory Dump: ${JSON.stringify(dump)}`);
+            notify(`Memory Dump:\n${JSON.stringify(dump, null, 2)}`);
+        }
+
+        function simulateCrash() {
+            logDebug('Simulating crash...');
+            notify('System crash simulated!');
+            setTimeout(() => {
+                ramUsed = 100;
+                cpuLoad = 100;
+                document.getElementById('ramUsed').textContent = ramUsed.toFixed(2);
+                document.getElementById('cpuLoad').textContent = cpuLoad.toFixed(1);
+                alert('CRASH! System overloaded. Please refresh.');
+            }, 1000);
+        }
+
+        // Initial Setup
+        if (localStorage.getItem('cart')) {
+            cart = JSON.parse(localStorage.getItem('cart'));
+            updateCartCount();
+        }
+    </script>
+</body>
+</html>
